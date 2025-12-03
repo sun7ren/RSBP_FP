@@ -1,0 +1,7 @@
+Flask
+flask-cors          # Required for communication with Next.js frontend
+pandas              # For handling embedding CSV data
+scikit-learn        # For k-Nearest Neighbors (k-NN)
+numpy               # For handling the embedding vectors
+
+# Run "pip install -r requirements.txt" in Terminal
