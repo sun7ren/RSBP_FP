@@ -9,7 +9,7 @@ import ast
 
 # Load Embeddings ONCE at Startup
 print("Loading embeddings...")
-EMBEDDINGS_PATH = "/Users/bella/RSBP_FP/backend/dataset/RSBP_FP.csv"
+EMBEDDINGS_PATH = "/Users/bella/Downloads/RSBP/RSBP_FP/backend/dataset/RSBP_FP.csv"
 
 try:
     df_embeddings = pd.read_csv(EMBEDDINGS_PATH)
@@ -27,9 +27,9 @@ app = Flask(__name__)
 CORS(app, resources={r"/*": {"origins": "*"}})
 
 # CSV paths
-CLASS_CSV_PATH = '/Users/bella/RSBP_FP/backend/dataset/Class.csv'
-SKILL_CSV_PATH = '/Users/bella/RSBP_FP/backend/dataset/Skill.csv'
-CAREER_CSV_PATH = '/Users/bella/RSBP_FP/backend/dataset/Career.csv'
+CLASS_CSV_PATH = '/Users/bella/Downloads/RSBP/RSBP_FP/backend/dataset/Class.csv'
+SKILL_CSV_PATH = '/Users/bella/Downloads/RSBP/RSBP_FP/backend/dataset/Class.csv'
+CAREER_CSV_PATH = '/Users/bella/Downloads/RSBP/RSBP_FP/backend/dataset/Career.csv'
 
 # Global data
 ALL_CLASSES = []
@@ -243,8 +243,15 @@ def recommend_classes_knn(student_vector, top_k=6):
     norm_vectors = np.linalg.norm(vectors, axis=1)
     similarity = dot / (norm_student * norm_vectors)
 
-    idx = np.argsort(similarity)[::-1][:top_k]
-    top_items = df_classes.iloc[idx]
+    sorted_idx = np.argsort(similarity)[::-1]
+
+    top_n = 12
+    candidates = sorted_idx[:top_n]
+
+    picked = np.random.choice(candidates, size=top_k, replace=False)
+
+    top_items = df_classes.iloc[picked]
+
 
     results = []
     for row_index, row in top_items.iterrows():

@@ -47,11 +47,11 @@ export default function BrowseClassPage() {
   }, [activeTab, classes]);
 
   return (
-    <div className="bg-find bg-cover min-h-screen pb-20">
+    <div className="bg-find bg-cover bg-center min-h-screen text-[#0C1B33] pb-20">
       <Header />
 
       <div className="pt-20 text-center">
-        <h1 className="text-5xl font-bold text-[#0E1E3C]">Browse Class</h1>
+        <h1 className="text-5xl font-bold">Browse Class</h1>
         <p className="text-gray-600 mt-3 text-lg">
           Explore the complete curriculum. Discover course details,
           prerequisites, and the specific skills you will gain.
@@ -95,28 +95,28 @@ export default function BrowseClassPage() {
               <strong>Pre-requisites:</strong>{" "}
               {cls.prerequisites?.length ? cls.prerequisites.join(", ") : "None"}
             </p>
-          <div className="mt-4">
-            {cls.skills?.length ? (
-              <div className="flex gap-2 flex-wrap">
-                {cls.skills.slice(0, 3).map((s, i) => (
-                  <span
-                    key={i}
-                    className="px-3 py-1 bg-gray-100 rounded-full text-sm text-gray-700"
-                  >
-                    {s}
-                  </span>
-                ))}
-              </div>
-            ) : (
-              <span className="px-3 py-1 bg-gray-100 rounded-full text-sm text-gray-700">
-                No skills
-              </span>
-            )}
+
+            <div className="mt-4">
+              {cls.skills?.length ? (
+                <div className="flex gap-2 flex-wrap">
+                  {cls.skills.slice(0, 3).map((s, i) => (
+                    <span
+                      key={i}
+                      className="text-xs bg-blue-100 text-blue-700 rounded-full px-3 py-1"
+                    >
+                      {s}
+                    </span>
+                  ))}
+                </div>
+              ) : (
+                <span className="text-xs bg-blue-100 text-blue-700 rounded-full px-3 py-1">
+                  No skills
+                </span>
+              )}
+            </div>
           </div>
-          </div>  
         ))}
 
-        {/* Empty state */}
         {filtered.length === 0 && (
           <div className="col-span-full text-center text-gray-500 py-10">
             No classes found for this category.

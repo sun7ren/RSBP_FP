@@ -97,7 +97,7 @@ export default function FindClass() {
       <div className="text-center pt-16">
         <h1 className="text-5xl font-bold mb-4">Find Your Class</h1>
         <p className="text-lg text-gray-700">
-          Don’t guess your electives. Match your study plan directly to your dream job.
+          Don't guess your electives. Match your study plan directly to the technical requirements of your dream job.
         </p>
       </div>
 
@@ -109,31 +109,41 @@ export default function FindClass() {
             Select one target career to identify the specific courses required.
           </p>
 
-          <input
-            type="text"
-            placeholder="Search career..."
-            className="w-full px-4 py-2 mb-4 border rounded-xl"
-            value={search}
-            onChange={e => setSearch(e.target.value)}
-          />
+          <div className="bg-white rounded-2xl shadow-md p-4 max-h-96 flex flex-col">
 
-          <div className="bg-white rounded-2xl shadow-md p-4 max-h-96 overflow-y-auto">
-            {filteredCareers.map((name) => (
-              <label
-                key={name}
-                className="flex items-center gap-2 py-2 cursor-pointer"
-                onClick={() => setSelectedCareer(name)}
-              >
-                <input
-                  type="radio"
-                  name="career"
-                  checked={selectedCareer === name}
-                  className="accent-blue-600"
-                  readOnly
-                />
-                <span>{name}</span>
-              </label>
-            ))}
+            <input
+              type="text"
+              placeholder="Search career..."
+              className="w-full px-4 py-2 mb-4 border border-gray-300 rounded-xl"
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+            />
+
+            <div className="flex-1 overflow-y-auto">
+              {filteredCareers.length === 0 ? (
+                <p className="text-gray-500 text-sm text-center py-4">
+                  No career found
+                </p>
+              ) : (
+                filteredCareers.map((name) => (
+                  <label
+                    key={name}
+                    className="flex items-center gap-2 py-2 cursor-pointer"
+                    onClick={() => setSelectedCareer(name)}
+                  >
+                    <input
+                      type="radio"
+                      name="career"
+                      checked={selectedCareer === name}
+                      className="accent-blue-600"
+                      readOnly
+                    />
+                    <span>{name}</span>
+                  </label>
+                ))
+              )}
+            </div>
+
           </div>
         </div>
 
@@ -153,10 +163,17 @@ export default function FindClass() {
               return (
                 <div key={cls.name} className="bg-white rounded-2xl shadow p-4">
                   <h3 className="text-lg font-semibold">{cls.name}</h3>
-                  <p className="text-sm text-gray-500">Credit: {cls.credits}</p>
-                  <p className="text-sm text-gray-500">Status: {cls.type}</p>
+
+                  <p className="text-sm text-gray-500">
+                    <strong>Credit:</strong> {cls.credits}
+                  </p>
+
+                  <p className="text-sm text-gray-500">
+                    <strong>Status:</strong> {cls.type}
+                  </p>
+
                   <p className="text-sm text-gray-500 mb-2">
-                    Pre-requisites:{" "}
+                    <strong>Pre-requisites:</strong>{" "}
                     {full?.prerequisites?.length ? full.prerequisites.join(", ") : "-"}
                   </p>
 
@@ -171,6 +188,7 @@ export default function FindClass() {
               );
             })}
           </div>
+
         </div>
 
       </div>
