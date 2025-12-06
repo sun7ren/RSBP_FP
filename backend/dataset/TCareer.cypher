@@ -833,3 +833,45 @@ CALL gds.node2vec.mutate(
   }
 )
 YIELD nodePropertiesWritten;
+
+
+// Get all Classes + their related Skills + prerequisite Classes
+MATCH (c:Class)
+OPTIONAL MATCH (c)-[:TEACHES]->(s:Skill)
+OPTIONAL MATCH (c)-[:PREREQUISITE_OF]->(next:Class)
+OPTIONAL MATCH (prev:Class)-[:PREREQUISITE_OF]->(c)
+
+RETURN
+    c.Name        AS name,
+    c.Semester    AS semester,
+    c.Status      AS status,
+    c.Credits     AS credits,
+    c.embedding   AS embedding,
+    collect(DISTINCT s.Name)     AS teaches_skills,
+    collect(DISTINCT next.Name)  AS prerequisites_for,
+    collect(DISTINCT prev.Name)  AS prerequisites_required
+ORDER BY name;
+
+// Get all Skills + which Classes teach them + which Careers require them
+MATCH (s:Skill)
+OPTIONAL MATCH (c:Class)-[:TEACHES]->(s)
+OPTIONAL MATCH (car:Career)-[:REQUIRES]->(s)
+
+RETURN
+    s.Name AS name,
+    s.embedding AS embedding,
+    collect(DISTINCT c.Name) AS taught_by_classes,
+    collect(DISTINCT car.Name) AS required_by_careers
+ORDER BY name;
+
+// Get all Careers + required Skills + recommended Classes
+MATCH (car:Career)
+OPTIONAL MATCH (car)-[:REQUIRES]->(s:Skill)
+OPTIONAL MATCH (c:Class)-[:TEACHES]->(s)
+
+RETURN
+    car.Name AS name,
+    car.embedding AS embedding,
+    collect(DISTINCT s.Name) AS required_skills,
+    collect(DISTINCT c.Name) AS recommended_classes
+ORDER BY name;
