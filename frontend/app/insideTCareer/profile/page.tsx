@@ -29,7 +29,7 @@ export default function Home() {
   const [popupVisible, setPopupVisible] = useState(false);
   
   const handleSubmit = async () => {
-  const response = await fetch("http://127.0.0.1:5000/api/submit-selection", {
+  const response = await fetch("http://127.0.0.1:5001/api/submit-selection", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
@@ -38,7 +38,7 @@ export default function Home() {
     }),
   });
 
-  const embeddingFetch = await fetch("http://127.0.0.1:5000/api/student-embedding", {
+  const embeddingFetch = await fetch("http://127.0.0.1:5001/api/student-embedding", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
@@ -54,19 +54,18 @@ export default function Home() {
   console.log("Student Embedding:", embeddingResponse.vector);
 
   const user = auth.currentUser;
-  if (user && embeddingResponse.vector) {
-    await updateDoc(doc(db, "users", user.uid), {
-      embedding: embeddingResponse.vector,
-      embeddingCount: embeddingResponse.count_used,
-      selectedClasses,
-      selectedSkills
-    });
-  }
+    if (user && embeddingResponse.vector) {
+      await updateDoc(doc(db, "users", user.uid), {
+        embedding: embeddingResponse.vector,
+        embeddingCount: embeddingResponse.count_used,
+        selectedClasses,
+        selectedSkills
+      });
+    }
 
-  setPopupVisible(true);
-  setTimeout(() => setPopupVisible(false), 2000);
-};
-
+    setPopupVisible(true);
+    setTimeout(() => setPopupVisible(false), 2000);
+  };
 
   useEffect(() => {
     const loadUser = async () => {
@@ -130,8 +129,6 @@ export default function Home() {
       console.error("Error signing out: ", error);
     }
   };
-
-  
 
   return (
     <div className="bg-find bg-cover bg-center min-h-screen">

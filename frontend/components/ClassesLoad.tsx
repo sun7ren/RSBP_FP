@@ -9,7 +9,7 @@ interface CourseClass {
   type: 'mandatory' | 'elective'; 
 }
 
-const CLASSES_API_URL = 'http://127.0.0.1:5000/api/classes'; 
+const CLASSES_API_URL = 'http://127.0.0.1:5001/api/classes'; 
 
 const classItemStyle =
   "flex items-center p-3 border-b border-gray-100 hover:bg-blue-50 cursor-pointer transition-colors duration-150";

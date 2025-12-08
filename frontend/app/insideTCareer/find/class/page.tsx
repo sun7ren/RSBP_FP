@@ -22,14 +22,14 @@ export default function FindClass() {
   const [error, setError] = useState("");
 
   useEffect(() => {
-    fetch("http://127.0.0.1:5000/api/careers")
+    fetch("http://127.0.0.1:5001/api/careers")
       .then(r => r.json())
       .then(data => setCareers(data.map((x: any) => x.name)))
       .catch(() => setError("Cannot load careers"));
   }, []);
 
   useEffect(() => {
-    fetch("http://127.0.0.1:5000/api/classes")
+    fetch("http://127.0.0.1:5001/api/classes")
       .then(r => r.json())
       .then(data => setAllClasses(data))
       .catch(() => {});
@@ -45,7 +45,7 @@ export default function FindClass() {
     setError("");
 
     try {
-      const res1 = await fetch("http://127.0.0.1:5000/api/student-embedding", {
+      const res1 = await fetch("http://127.0.0.1:5001/api/student-embedding", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -56,7 +56,7 @@ export default function FindClass() {
       const data1 = await res1.json();
       setLastVector(data1.vector);
 
-      const res2 = await fetch("http://127.0.0.1:5000/api/recommend/classes", {
+      const res2 = await fetch("http://127.0.0.1:5001/api/recommend/classes", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ vector: data1.vector }),
@@ -79,7 +79,7 @@ export default function FindClass() {
       v => v + (Math.random() - 0.5) * 0.0002
     );
 
-    const res2 = await fetch("http://127.0.0.1:5000/api/recommend/classes", {
+    const res2 = await fetch("http://127.0.0.1:5001/api/recommend/classes", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ vector: noise }),
@@ -132,7 +132,7 @@ export default function FindClass() {
                     onClick={() => setSelectedCareer(name)}
                   >
                     <input
-                      type="radio"
+                      type="checkbox"
                       name="career"
                       checked={selectedCareer === name}
                       className="accent-blue-600"

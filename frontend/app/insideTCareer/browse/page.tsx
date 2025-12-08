@@ -12,7 +12,7 @@ interface ClassData {
   skills: string[];
 }
 
-const API_URL = "http://127.0.0.1:5000/api/classes";
+const API_URL = "http://127.0.0.1:5001/api/classes";
 
 const TABS = [
   { id: "mandatory-odd", label: "Mandatory Odd Semester", type: "mandatory", sem: "odd" },

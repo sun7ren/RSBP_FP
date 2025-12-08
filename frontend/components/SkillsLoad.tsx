@@ -8,7 +8,7 @@ interface Skill {
 }
 
 
-const SKILLS_API_URL = 'http://127.0.0.1:5000/api/skills'; 
+const SKILLS_API_URL = 'http://127.0.0.1:5001/api/skills'; 
 
 const skillItemStyle =
   "flex items-center p-3 border-b border-gray-100 hover:bg-blue-50 cursor-pointer transition-colors duration-150";

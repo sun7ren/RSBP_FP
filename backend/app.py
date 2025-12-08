@@ -1,4 +1,5 @@
 # Run using "python app.py"
+from logic.recommender.careerRecommender import CareerRecommender
 from flask import Flask, jsonify, request
 import csv
 from flask_cors import CORS 
@@ -9,7 +10,8 @@ import ast
 
 # Load Embeddings ONCE at Startup
 print("Loading embeddings...")
-EMBEDDINGS_PATH = "/Users/bella/Downloads/RSBP/RSBP_FP/backend/dataset/RSBP_FP.csv"
+EMBEDDINGS_PATH = "C:\\Users\\Sinta\\My_project\\rsbp_fp\\backend\\dataset\\RSBP_FP.csv"
+career_rec = CareerRecommender(EMBEDDINGS_PATH)
 
 try:
     df_embeddings = pd.read_csv(EMBEDDINGS_PATH)
@@ -27,9 +29,9 @@ app = Flask(__name__)
 CORS(app, resources={r"/*": {"origins": "*"}})
 
 # CSV paths
-CLASS_CSV_PATH = '/Users/bella/Downloads/RSBP/RSBP_FP/backend/dataset/Class.csv'
-SKILL_CSV_PATH = '/Users/bella/Downloads/RSBP/RSBP_FP/backend/dataset/Class.csv'
-CAREER_CSV_PATH = '/Users/bella/Downloads/RSBP/RSBP_FP/backend/dataset/Career.csv'
+CLASS_CSV_PATH = 'C:\\Users\\Sinta\\My_project\\rsbp_fp\\backend\\dataset\\Class.csv'
+SKILL_CSV_PATH = 'C:\\Users\\Sinta\\My_project\\rsbp_fp\\backend\\dataset\\Skill.csv'
+CAREER_CSV_PATH = 'C:\\Users\\Sinta\\My_project\\rsbp_fp\\backend\\dataset\\Career.csv'
 
 # Global data
 ALL_CLASSES = []
@@ -95,7 +97,10 @@ def load_data_from_csv(file_path, data_type):
                     if not row.get('name'):
                         continue
                     item['type'] = 'career'
-
+                    item['description'] = row.get('description', '')
+                    item['required_skills'] = parse_list_cell(row.get('required_skills', ''))
+                    item['recommended_classes'] = parse_list_cell(row.get('recommended_classes', ''))
+                
                 items.append(item)
 
     except Exception as e:
@@ -285,10 +290,36 @@ def api_recommend_classes():
     except Exception as e:
         print("Error in recommendation:", e)
         return jsonify({"error": str(e)}), 500
-##################################################################
 
+@app.route('/api/recommend/careers', methods=['POST'])
+def api_recommend_careers():
+    data = request.get_json()
+    student_vector = data.get("vector", None)
+
+    if student_vector is None:
+        return jsonify({"error": "Missing 'vector'"}), 400
+
+    try:
+        # Use your existing recommender
+        top_careers = career_rec.recommend(student_vector, top_k=6)
+        results = []
+
+        for _, row in top_careers.iterrows():
+            # Get full info from ALL_CAREERS
+            career_info = next((c for c in ALL_CAREERS if c["name"] == row["name"]), {})
+            results.append({
+                "name": row["name"],
+                "similarity": float(row["score"]),
+                "description": career_info.get("description", ""),
+                "skills": career_info.get("required_skills", [])  # <-- key from CSV
+            })
+
+        return jsonify({"results": results, "count": len(results)})
+    except Exception as e:
+        print("Error in career recommendation:", e)
+        return jsonify({"error": str(e)}), 500
 
 # RUN APP
 if __name__ == '__main__':
     initialize_data()
-    app.run(debug=True, port=5000)
+    app.run(debug=True, port=5001)
