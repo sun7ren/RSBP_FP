@@ -10,7 +10,7 @@ class CareerRecommender:
         # Convert the embedding string to numpy array
         self.embeddings = np.vstack(self.df['embedding'].apply(eval))
 
-    def recommend(self, student_vector, top_k=6):
+    def recommend(self, student_vector, top_k=8):
         student_vector = np.array(student_vector).reshape(1, -1)
         scores = cosine_similarity(student_vector, self.embeddings)[0]
         top_indices = np.argsort(scores)[::-1][:top_k]

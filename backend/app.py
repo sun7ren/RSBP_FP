@@ -10,7 +10,7 @@ import ast
 
 # Load Embeddings ONCE at Startup
 print("Loading embeddings...")
-EMBEDDINGS_PATH = "C:\\Users\\Sinta\\My_project\\rsbp_fp\\backend\\dataset\\RSBP_FP.csv"
+EMBEDDINGS_PATH = "dataset/RSBP_FP.csv"
 career_rec = CareerRecommender(EMBEDDINGS_PATH)
 
 try:
@@ -29,9 +29,9 @@ app = Flask(__name__)
 CORS(app, resources={r"/*": {"origins": "*"}})
 
 # CSV paths
-CLASS_CSV_PATH = 'C:\\Users\\Sinta\\My_project\\rsbp_fp\\backend\\dataset\\Class.csv'
-SKILL_CSV_PATH = 'C:\\Users\\Sinta\\My_project\\rsbp_fp\\backend\\dataset\\Skill.csv'
-CAREER_CSV_PATH = 'C:\\Users\\Sinta\\My_project\\rsbp_fp\\backend\\dataset\\Career.csv'
+CLASS_CSV_PATH = 'dataset/Class.csv'
+SKILL_CSV_PATH = 'dataset/Skill.csv'
+CAREER_CSV_PATH = 'dataset/Career.csv'
 
 # Global data
 ALL_CLASSES = []
@@ -233,44 +233,54 @@ def compute_student_embedding():
 
 
 ##### RECOMMENDATION (EXISTING CODE) ############################
-def recommend_classes_knn(student_vector, top_k=6):
-    try:
-        df_classes = df_embeddings[df_embeddings["type"] == "class"]
-    except:
-        class_names = [c["name"] for c in ALL_CLASSES]
-        df_classes = df_embeddings[df_embeddings["name"].isin(class_names)]
-
-    vectors = np.stack(df_classes["embedding"].values)
-    student = np.array(student_vector).reshape(1, -1)
-
-    dot = np.dot(vectors, student.T).flatten()
-    norm_student = np.linalg.norm(student)
-    norm_vectors = np.linalg.norm(vectors, axis=1)
-    similarity = dot / (norm_student * norm_vectors)
-
-    sorted_idx = np.argsort(similarity)[::-1]
-
-    top_n = 12
-    candidates = sorted_idx[:top_n]
-
-    picked = np.random.choice(candidates, size=top_k, replace=False)
-
-    top_items = df_classes.iloc[picked]
-
-
+# --- CLASS RECOMMENDER (FIXED) ---
+def recommend_classes(df_emb, df_classes_meta, vector, top_k=4):
+    """Recommend classes using cosine similarity."""
+    # Get all valid class names from the Class.csv
+    valid_class_names = df_classes_meta['name'].tolist()
+    
+    # Filter embeddings to only include rows that are classes
+    df_classes = df_emb[df_emb['name'].isin(valid_class_names)].copy()
+    
+    if df_classes.empty:
+        return []
+    
+    # Cosine Similarity
+    class_vectors = np.stack(df_classes["embedding"].values)
+    
+    dot = np.dot(class_vectors, vector)
+    norm_v = np.linalg.norm(vector)
+    norm_c = np.linalg.norm(class_vectors, axis=1)
+    
+    # Avoid division by zero
+    sim = dot / (norm_v * norm_c + 1e-9)
+    
+    # Get Top K indices
+    top_indices = np.argsort(sim)[::-1][:top_k]
+    
+    # Get recommended class names with similarity scores
+    recommended_classes = df_classes.iloc[top_indices]
+    
     results = []
-    for row_index, row in top_items.iterrows():
+    for idx, (row_index, row) in enumerate(recommended_classes.iterrows()):
         name = row["name"]
         match = next((c for c in ALL_CLASSES if c["name"] == name), None)
-
+        
         results.append({
             "name": name,
-            "similarity": float(similarity[row_index]),
+            "similarity": float(sim[top_indices[idx]]),
             "credits": match.get("credits") if match else None,
             "type": match.get("type") if match else None,
             "semester": match.get("semester") if match else None
         })
     return results
+
+
+def recommend_classes_knn(student_vector, top_k=6):
+    """Legacy wrapper for backward compatibility."""
+    # Load classes metadata
+    df_classes_meta = pd.read_csv(CLASS_CSV_PATH)
+    return recommend_classes(df_embeddings, df_classes_meta, student_vector, top_k=top_k)
 
 
 @app.route('/api/recommend/classes', methods=['POST'])
@@ -300,8 +310,15 @@ def api_recommend_careers():
         return jsonify({"error": "Missing 'vector'"}), 400
 
     try:
-        # Use your existing recommender
-        top_careers = career_rec.recommend(student_vector, top_k=6)
+        # Use your existing recommender (retrieve more, display fewer)
+        backend_top_k = 8  # compute with K=8
+        display_top_k = 6  # return only top 6 to client
+
+        top_careers = career_rec.recommend(student_vector, top_k=backend_top_k)
+
+        # Trim to the number we want to show on the web
+        top_careers = top_careers.head(display_top_k)
+
         results = []
 
         for _, row in top_careers.iterrows():
