@@ -310,28 +310,44 @@ def api_recommend_careers():
         return jsonify({"error": "Missing 'vector'"}), 400
 
     try:
-        # Use your existing recommender (retrieve more, display fewer)
-        backend_top_k = 8  # compute with K=8
-        display_top_k = 6  # return only top 6 to client
+        # ---- USE ONLY CAREER NAMES FROM career.csv ----
+        career_names = set(c["name"] for c in ALL_CAREERS)
 
-        top_careers = career_rec.recommend(student_vector, top_k=backend_top_k)
+        # Filter embedding dataframe based on career.csv names
+        df_career_embeddings = df_embeddings[df_embeddings["name"].isin(career_names)]
 
-        # Trim to the number we want to show on the web
-        top_careers = top_careers.head(display_top_k)
+        if df_career_embeddings.empty:
+            return jsonify({"error": "No matching career embeddings found"}), 400
+
+        # Cosine similarity
+        career_vectors = np.stack(df_career_embeddings["embedding"].values)
+
+        dot = np.dot(career_vectors, student_vector)
+        norm_v = np.linalg.norm(student_vector)
+        norm_c = np.linalg.norm(career_vectors, axis=1)
+
+        sim = dot / (norm_v * norm_c + 1e-9)
+
+        df_career_embeddings = df_career_embeddings.copy()
+        df_career_embeddings["score"] = sim
+
+        # Sort
+        backend_top_k = 8
+        display_top_k = 6
+        df_sorted = df_career_embeddings.sort_values(by="score", ascending=False).head(display_top_k)
 
         results = []
-
-        for _, row in top_careers.iterrows():
-            # Get full info from ALL_CAREERS
-            career_info = next((c for c in ALL_CAREERS if c["name"] == row["name"]), {})
+        for _, row in df_sorted.iterrows():
+            info = next((c for c in ALL_CAREERS if c["name"] == row["name"]), {})
             results.append({
                 "name": row["name"],
                 "similarity": float(row["score"]),
-                "description": career_info.get("description", ""),
-                "skills": career_info.get("required_skills", [])  # <-- key from CSV
+                "description": info.get("description", ""),
+                "skills": info.get("required_skills", [])
             })
 
         return jsonify({"results": results, "count": len(results)})
+
     except Exception as e:
         print("Error in career recommendation:", e)
         return jsonify({"error": str(e)}), 500
