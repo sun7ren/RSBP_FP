@@ -79,15 +79,20 @@ export default function FindClass() {
       v => v + (Math.random() - 0.5) * 0.0002
     );
 
-    const res2 = await fetch("http://127.0.0.1:5001/api/recommend/classes", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ vector: noise }),
-    });
-    const data2 = await res2.json();
+    try {
+      const res2 = await fetch("http://127.0.0.1:5001/api/recommend/classes", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ vector: noise }),
+      });
+      const data2 = await res2.json();
 
-    setRecommendations(data2.results || []);
-    setLoading(false);
+      setRecommendations(data2.results || []);
+    } catch {
+      setError("Regeneration failed");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -125,9 +130,9 @@ export default function FindClass() {
                   No career found
                 </p>
               ) : (
-                filteredCareers.map((name) => (
+                filteredCareers.map((name, index) => (
                   <label
-                    key={name}
+                    key={name + index}
                     className="flex items-center gap-2 py-2 cursor-pointer"
                     onClick={() => setSelectedCareer(name)}
                   >
@@ -156,12 +161,17 @@ export default function FindClass() {
           </p>
 
           {loading && <p>Loading...</p>}
+          {error && <p className="text-red-500">{error}</p>} 
 
           <div className="grid grid-cols-2 gap-6">
-            {recommendations.map((cls) => {
+            {recommendations.map((cls, index) => { 
               const full = allClasses.find(c => c.name === cls.name);
+              
               return (
-                <div key={cls.name} className="bg-white rounded-2xl shadow p-4">
+                <div 
+                  key={`${cls.name}-${index}`} 
+                  className="bg-white rounded-2xl shadow p-4"
+                >
                   <h3 className="text-lg font-semibold">{cls.name}</h3>
 
                   <p className="text-sm text-gray-500">
@@ -196,16 +206,18 @@ export default function FindClass() {
       <div className="mt-10 flex justify-center gap-6">
         <button
           onClick={submit}
-          className="bg-blue-600 text-white px-10 py-3 rounded-full font-semibold hover:bg-blue-700"
+          className="bg-blue-600 text-white px-10 py-3 rounded-full font-semibold hover:bg-blue-700 disabled:opacity-50"
+          disabled={!selectedCareer || loading} 
         >
-          Submit
+          {loading && !lastVector ? 'Searching...' : 'Submit'}
         </button>
 
         <button
           onClick={regenerate}
-          className="border border-blue-600 text-blue-600 px-10 py-3 rounded-full font-semibold hover:bg-blue-50"
+          className="border border-blue-600 text-blue-600 px-10 py-3 rounded-full font-semibold hover:bg-blue-50 disabled:opacity-50"
+          disabled={!lastVector || loading} 
         >
-          Re-Generate ↻
+          {loading && lastVector ? 'Regenerating...' : 'Re-Generate ↻'}
         </button>
       </div>
     </div>
