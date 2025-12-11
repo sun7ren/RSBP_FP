@@ -236,45 +236,45 @@ def compute_student_embedding():
 # --- CLASS RECOMMENDER (FIXED) ---
 def recommend_classes(df_emb, df_classes_meta, vector, top_k=4):
     """Recommend classes using cosine similarity."""
-    # Get all valid class names from the Class.csv
     valid_class_names = df_classes_meta['name'].tolist()
     
-    # Filter embeddings to only include rows that are classes
+    # Filter embeddings to only include valid class names
     df_classes = df_emb[df_emb['name'].isin(valid_class_names)].copy()
     
     if df_classes.empty:
         return []
     
-    # Cosine Similarity
     class_vectors = np.stack(df_classes["embedding"].values)
     
+    # Calculate Similarity (Scores)
     dot = np.dot(class_vectors, vector)
     norm_v = np.linalg.norm(vector)
     norm_c = np.linalg.norm(class_vectors, axis=1)
-    
-    # Avoid division by zero
     sim = dot / (norm_v * norm_c + 1e-9)
     
-    # Get Top K indices
-    top_indices = np.argsort(sim)[::-1][:top_k]
+    # Add similarity scores back to the DataFrame
+    df_classes['similarity'] = sim
     
-    # Get recommended class names with similarity scores
-    recommended_classes = df_classes.iloc[top_indices]
+    df_classes = df_classes.sort_values(by='similarity', ascending=False)
+    
+    df_unique_classes = df_classes.drop_duplicates(subset=['name'], keep='first')
+    
+    recommended_classes = df_unique_classes.head(top_k)
     
     results = []
-    for idx, (row_index, row) in enumerate(recommended_classes.iterrows()):
+
+    for _, row in recommended_classes.iterrows():
         name = row["name"]
         match = next((c for c in ALL_CLASSES if c["name"] == name), None)
         
         results.append({
             "name": name,
-            "similarity": float(sim[top_indices[idx]]),
+            "similarity": float(row["similarity"]), # Use the similarity score from the dataframe
             "credits": match.get("credits") if match else None,
             "type": match.get("type") if match else None,
             "semester": match.get("semester") if match else None
         })
     return results
-
 
 def recommend_classes_knn(student_vector, top_k=6):
     """Legacy wrapper for backward compatibility."""
