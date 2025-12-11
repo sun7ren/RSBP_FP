@@ -71,29 +71,24 @@ export default function FindClass() {
     }
   };
 
-  const regenerate = async () => {
-    if (!lastVector) return;
-    setLoading(true);
+const regenerate = async () => {
+  if (!lastVector) return;
+  setLoading(true);
 
-    const noise = lastVector.map(
-      v => v + (Math.random() - 0.5) * 0.0002
-    );
+  const NOISE_MAGNITUDE = 0.3; // Increased noise magnitude
 
-    try {
-      const res2 = await fetch("http://127.0.0.1:5001/api/recommend/classes", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ vector: noise }),
-      });
-      const data2 = await res2.json();
+  const noise = lastVector.map(v => v + (Math.random() - 0.5) * NOISE_MAGNITUDE);
 
-      setRecommendations(data2.results || []);
-    } catch {
-      setError("Regeneration failed");
-    } finally {
-      setLoading(false);
-    }
-  };
+  const res2 = await fetch("http://127.0.0.1:5001/api/recommend/classes", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ vector: noise }),
+  });
+  const data2 = await res2.json();
+
+  setRecommendations(data2.results || []);
+  setLoading(false);
+};
 
   return (
     <div className="bg-find bg-cover bg-center min-h-screen text-[#0C1B33]">
